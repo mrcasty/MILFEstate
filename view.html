@@ -12,50 +12,49 @@
     <a href="index.html">← Back</a>
   </main>
 
+  <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
   <script>
-    // Replace this with your actual published Google Sheets CSV URL
-    const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4zi8Hcg6gWlEzMOexYMcRaPtBUbI4VT-VMI-GO_4xXIyWJHJgwfS5cUIkiid-4E_XpvVniMRRtyEi/pub?output=csv";
-
-    // Get the requested row from the query string
-    const urlParams = new URLSearchParams(window.location.search);
-    const requestedRow = parseInt(urlParams.get("row"));
-
-    fetch(sheetUrl)
-  .then(res => res.text())
-  .then(csv => {
-    const lines = csv.trim().split("\n").map(l => l.split(","));
-    const headers = lines[0];
-    const dataRow = lines[requestedRow];
-
-    const contentDiv = document.getElementById("row-content");
-
-    if (isNaN(requestedRow) || requestedRow < 1 || requestedRow >= lines.length) {
-      contentDiv.innerHTML = "<p><strong>Error:</strong> Invalid row requested.</p>";
-      return;
-    }
-
-    const data = {};
-    headers.forEach((header, i) => {
-      data[header.trim()] = dataRow[i] ? dataRow[i].trim() : '';
+  const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4zi8Hcg6gWlEzMOexYMcRaPtBUbI4VT-VMI-GO_4xXIyWJHJgwfS5cUIkiid-4E_XpvVniMRRtyEi/pub?output=csv";
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const requestedRow = parseInt(urlParams.get("row"));
+  
+  fetch(sheetUrl)
+    .then(res => res.text())
+    .then(csv => {
+      const parsed = Papa.parse(csv.trim(), { skipEmptyLines: true });
+      const lines = parsed.data;
+      const headers = lines[0];
+      const dataRow = lines[requestedRow];
+  
+      const contentDiv = document.getElementById("row-content");
+  
+      if (isNaN(requestedRow) || requestedRow < 1 || requestedRow >= lines.length) {
+        contentDiv.innerHTML = "<p><strong>Error:</strong> Invalid row requested.</p>";
+        return;
+      }
+  
+      const data = {};
+      headers.forEach((header, i) => {
+        data[header.trim()] = dataRow[i] ? dataRow[i].trim() : '';
+      });
+  
+      const html = `
+        <article>
+          <h2>${data["Property Name"] || "Unnamed Property"}</h2>
+          <h4>Type: ${data["Property Type"] || "Unknown Type"}</h4>
+          ${data["Pic"] ? `<img src="${data["Pic"]}" alt="Property Picture" style="max-width:100%;height:auto;">` : ''}
+          <p>${data["Note 1"] || ""}</p>
+          <h3>Price: ${data["Price"] || "Contact us"}</h3>
+        </article>
+      `;
+  
+      contentDiv.innerHTML = html;
+    })
+    .catch(err => {
+      console.error("Fetch failed:", err);
+      document.getElementById("row-content").innerHTML = "<p>Error loading spreadsheet.</p>";
     });
-
-    // Now create a nice card
-    const html = `
-      <article>
-        <h2>${data["Property Name"]}</h2>
-        <h4>Type: ${data["Property Type"]}</h4>
-        ${data["Pic"] ? `<img src="${data["Pic"]}" alt="Property Picture" style="max-width:100%;height:auto;">` : ''}
-        <p>${data["Note 1"]}</p>
-        <h3>Price: ${data["Price"]}</h3>
-      </article>
-    `;
-
-    contentDiv.innerHTML = html;
-  })
-  .catch(err => {
-    console.error("Fetch failed:", err);
-    document.getElementById("row-content").innerHTML = "<p>Error loading spreadsheet.</p>";
-  });
   </script>
 </body>
 </html>
