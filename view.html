@@ -21,30 +21,41 @@
     const requestedRow = parseInt(urlParams.get("row"));
 
     fetch(sheetUrl)
-      .then(res => res.text())
-      .then(csv => {
-        const lines = csv.trim().split("\n").map(l => l.split(","));
-        const headers = lines[0];
-        const dataRow = lines[requestedRow];
+  .then(res => res.text())
+  .then(csv => {
+    const lines = csv.trim().split("\n").map(l => l.split(","));
+    const headers = lines[0];
+    const dataRow = lines[requestedRow];
 
-        const contentDiv = document.getElementById("row-content");
+    const contentDiv = document.getElementById("row-content");
 
-        if (!dataRow) {
-          contentDiv.innerHTML = "<p><strong>Error:</strong> Row not found.</p>";
-          return;
-        }
+    if (isNaN(requestedRow) || requestedRow < 1 || requestedRow >= lines.length) {
+      contentDiv.innerHTML = "<p><strong>Error:</strong> Invalid row requested.</p>";
+      return;
+    }
 
-        // Build table of values
-        const html = headers.map((h, i) => `
-          <p><strong>${h.trim()}:</strong> ${dataRow[i] ? dataRow[i].trim() : ''}</p>
-        `).join("");
+    const data = {};
+    headers.forEach((header, i) => {
+      data[header.trim()] = dataRow[i] ? dataRow[i].trim() : '';
+    });
 
-        contentDiv.innerHTML = html;
-      })
-      .catch(err => {
-        document.getElementById("row-content").innerHTML = "<p>Error loading spreadsheet.</p>";
-        console.error(err);
-      });
+    // Now create a nice card
+    const html = `
+      <article>
+        <h2>${data["Property Name"]}</h2>
+        <h4>Type: ${data["Property Type"]}</h4>
+        ${data["Pic"] ? `<img src="${data["Pic"]}" alt="Property Picture" style="max-width:100%;height:auto;">` : ''}
+        <p>${data["Note 1"]}</p>
+        <h3>Price: ${data["Price"]}</h3>
+      </article>
+    `;
+
+    contentDiv.innerHTML = html;
+  })
+  .catch(err => {
+    console.error("Fetch failed:", err);
+    document.getElementById("row-content").innerHTML = "<p>Error loading spreadsheet.</p>";
+  });
   </script>
 </body>
 </html>
