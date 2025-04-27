@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Row Viewer</title>
+  <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
+</head>
+<body>
+  <main class="container">
+    <h1>Row Details</h1>
+    <div id="row-content">Loading...</div>
+    <a href="index.html">← Back</a>
+  </main>
+
+  <script>
+    // Replace this with your actual published Google Sheets CSV URL
+    const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4zi8Hcg6gWlEzMOexYMcRaPtBUbI4VT-VMI-GO_4xXIyWJHJgwfS5cUIkiid-4E_XpvVniMRRtyEi/pub?output=csv";
+
+    // Get the requested row from the query string
+    const urlParams = new URLSearchParams(window.location.search);
+    const requestedRow = parseInt(urlParams.get("row"));
+
+    fetch(sheetUrl)
+      .then(res => res.text())
+      .then(csv => {
+        const lines = csv.trim().split("\n").map(l => l.split(","));
+        const headers = lines[0];
+        const dataRow = lines[requestedRow];
+
+        const contentDiv = document.getElementById("row-content");
+
+        if (!dataRow) {
+          contentDiv.innerHTML = "<p><strong>Error:</strong> Row not found.</p>";
+          return;
+        }
+
+        // Build table of values
+        const html = headers.map((h, i) => `
+          <p><strong>${h.trim()}:</strong> ${dataRow[i] ? dataRow[i].trim() : ''}</p>
+        `).join("");
+
+        contentDiv.innerHTML = html;
+      })
+      .catch(err => {
+        document.getElementById("row-content").innerHTML = "<p>Error loading spreadsheet.</p>";
+        console.error(err);
+      });
+  </script>
+</body>
+</html>
