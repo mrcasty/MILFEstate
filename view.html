@@ -43,7 +43,7 @@
         <article>
           <h2>${data["Property name"] || "Unnamed Property"}</h2>
           <h4>Type: ${data["Property type"] || "Unknown Type"}</h4>
-          ${data["Pic"] ? `<img src="${data["Pic"]}" alt="Property Picture" style="max-width:100%;height:auto;">` : ''}
+          ${data["Pic"] ? `<p><a href="${data["Pic"]}" target="_blank" rel="noopener">View Pictures</a></p>` : ''}
           <p>${data["Note 1"] || ""}</p>
           <h3>Price: ${data["Price"] || "Contact us"}</h3>
         </article>
