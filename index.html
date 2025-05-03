@@ -2,17 +2,236 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Select Row</title>
+  <title>Property Browser</title>
   <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
+  <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    details summary {
+      cursor: pointer;
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .listing {
+      cursor: pointer;
+    }
+    .sort-controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+  </style>
 </head>
 <body>
   <main class="container">
-    <h1>Select a Row</h1>
-    <form action="view.html" method="GET">
-      <label for="row">Enter row number (starting from 1):</label>
-      <input type="number" name="row" id="row" min="1" required>
-      <button type="submit">View Row</button>
-    </form>
+    <h1>Property Listings</h1>
+
+    <details>
+      <summary>Filter</summary>
+      <form id="filter-form">
+        <label>
+          Property Type:
+          <input type="text" name="Property type">
+        </label>
+        <label>
+          Location:
+          <input type="text" name="Location">
+        </label>
+        <label>
+          Min Price:
+          <input type="number" name="minPrice">
+        </label>
+        <label>
+          Max Price:
+          <input type="number" name="maxPrice">
+        </label>
+        <button type="submit">Apply Filter</button>
+      </form>
+    </details>
+
+    <div class="sort-controls">
+      <label>
+        Sort by:
+        <select id="sort-field">
+          <option value="">(none)</option>
+          <option value="Property name">Name</option>
+          <option value="Property type">Type</option>
+          <option value="Price">Price</option>
+        </select>
+      </label>
+      <label>
+        <input type="checkbox" id="sort-desc"> Descending
+      </label>
+    </div>
+
+    <div id="listings"></div>
+    <div class="pagination">
+      <button id="prev-page">&laquo; Previous</button>
+      <span id="page-info"></span>
+      <button id="next-page">Next &raquo;</button>
+    </div>
+
+    <hr>
+    <div id="row-content"></div>
   </main>
+
+  <script>
+    const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRW428ymgIgdzbRhVIs-oPZ2s8rhln-Q7X-k8v8pFzE3EqiSZ5xRPMdxiz5LJUC17Dp0pWHB8OGN77J/pub?gid=1412368678&single=true&output=csv";
+    let listings = [];
+    let headers = [];
+    let currentPage = 1;
+    const pageSize = 20;
+
+    const HEADER_MAP = {
+      "Property name": "Property name",
+      "Property type": "Property type",
+      "Location": "Location",
+      "Unit No.": "Unit No.",
+      "Floor": "Floor",
+      "Bedroom": "Bedroom",
+      "Bathroom": "Bathroom",
+      "Area Sqm.": "Area Sqm.",
+      "Price": "Price",
+      "Pic": "Pic",
+      "Remarks /ทิศ & วิว": "Remarks /ทิศ & วิว",
+      "Sale/rent conditions  eg. Transfer free etc.": "Sale/rent conditions  eg. Transfer free etc."
+    };
+
+    function normalizeHeaders(inputHeaders) {
+      const cleaned = inputHeaders.map(h => h.trim());
+      const missing = Object.values(HEADER_MAP).filter(expected => !cleaned.includes(expected));
+      if (missing.length > 0) {
+        console.warn("Missing headers:", missing);
+      }
+      return cleaned;
+    }
+
+    function sortListings() {
+      const sortField = document.getElementById("sort-field").value;
+      const desc = document.getElementById("sort-desc").checked;
+      if (!sortField) return;
+      listings.sort((a, b) => {
+        const aVal = (a[headers.indexOf(sortField)] || "").toLowerCase();
+        const bVal = (b[headers.indexOf(sortField)] || "").toLowerCase();
+        const aNum = parseFloat(aVal.replace(/[^0-9.]/g, "")) || 0;
+        const bNum = parseFloat(bVal.replace(/[^0-9.]/g, "")) || 0;
+        const isNumeric = !isNaN(aNum) && !isNaN(bNum);
+        if (isNumeric) return desc ? bNum - aNum : aNum - bNum;
+        return desc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+      });
+    }
+
+    function renderListings() {
+      sortListings();
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+      const visible = listings.slice(start, end);
+
+      const container = document.getElementById("listings");
+      container.innerHTML = "";
+
+      visible.forEach((row) => {
+        const data = {};
+        headers.forEach((header, i) => {
+          data[header.trim()] = row[i] ? row[i].trim() : '';
+        });
+
+        const div = document.createElement("div");
+        div.className = "listing";
+        div.innerHTML = `
+          <article>
+            <strong>${data["Property name"] || "Unnamed Property"}</strong><br>
+            Type: ${data["Property type"] || ""} | Location: ${data["Location"] || ""} | Price: ${data["Price"] || ""}
+          </article>
+        `;
+        div.addEventListener("click", () => renderDetail(row));
+        container.appendChild(div);
+      });
+
+      document.getElementById("page-info").textContent = `Page ${currentPage} of ${Math.ceil(listings.length / pageSize)}`;
+    }
+
+    function renderDetail(row) {
+      const contentDiv = document.getElementById("row-content");
+      const data = {};
+      headers.forEach((header, i) => {
+        data[header.trim()] = row[i] ? row[i].trim() : '';
+      });
+
+      contentDiv.innerHTML = `
+        <article>
+          <h2>${data["Property name"] || "Unnamed Property"}</h2>
+          <h4>Type: ${data["Property type"] || "Unknown Type"}</h4>
+          ${data["Pic"] ? `<p><a href="${data["Pic"]}" target="_blank" rel="noopener">View Pictures</a></p>` : ''}
+          <p>Location: ${data["Location"] || ""}</p>
+          <p>Unit: ${data["Unit No."] || ""}, Floor: ${data["Floor"] || ""}</p>
+          <p>Bedrooms: ${data["Bedroom"] || ""}, Bathrooms: ${data["Bathroom"] || ""}</p>
+          <p>Area: ${data["Area Sqm."] || ""} m&sup2;</p>
+          <h3>Price: ${data["Price"] || "Contact us"}</h3>
+          ${data["Remarks /ทิศ & วิว"] ? `<p>Remarks: ${data["Remarks /ทิศ & วิว"]}</p>` : ''}
+          ${data["Sale/rent conditions  eg. Transfer free etc."] ? `<p>Conditions: ${data["Sale/rent conditions  eg. Transfer free etc."]}</p>` : ''}
+        </article>
+      `;
+    }
+
+    function applyFilter(formData) {
+      listings = window.allRows.filter(row => {
+        const map = {};
+        headers.forEach((h, i) => map[h.trim()] = row[i] ? row[i].trim() : '');
+
+        const typeOk = !formData["Property type"] || map["Property type"].toLowerCase().includes(formData["Property type"].toLowerCase());
+        const locOk = !formData["Location"] || map["Location"].toLowerCase().includes(formData["Location"].toLowerCase());
+        const price = parseInt(map["Price"].replace(/[^0-9]/g, "")) || 0;
+        const minOk = !formData.minPrice || price >= parseInt(formData.minPrice);
+        const maxOk = !formData.maxPrice || price <= parseInt(formData.maxPrice);
+
+        return typeOk && locOk && minOk && maxOk;
+      });
+      currentPage = 1;
+      renderListings();
+    }
+
+    fetch(sheetUrl)
+      .then(res => res.blob())
+      .then(blob => blob.text())
+      .then(csv => {
+        const parsed = Papa.parse(csv.trim(), { skipEmptyLines: true });
+        headers = normalizeHeaders(parsed.data[0]);
+        window.allRows = parsed.data.slice(1);
+        listings = window.allRows;
+        renderListings();
+      });
+
+    document.getElementById("prev-page").addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderListings();
+      }
+    });
+
+    document.getElementById("next-page").addEventListener("click", () => {
+      if (currentPage * pageSize < listings.length) {
+        currentPage++;
+        renderListings();
+      }
+    });
+
+    document.getElementById("filter-form").addEventListener("submit", e => {
+      e.preventDefault();
+      const formData = Object.fromEntries(new FormData(e.target).entries());
+      applyFilter(formData);
+    });
+
+    document.getElementById("sort-field").addEventListener("change", () => {
+      renderListings();
+    });
+    document.getElementById("sort-desc").addEventListener("change", () => {
+      renderListings();
+    });
+  </script>
 </body>
 </html>
