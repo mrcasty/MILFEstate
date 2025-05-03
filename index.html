@@ -24,11 +24,39 @@
       align-items: center;
       margin-bottom: 1rem;
     }
+      article.listing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      align-items: start;
+    }
+    article.listing-grid header {
+      grid-column: 1 / -1;
+    }
+      #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #loading-screen img {
+      max-width: 200px;
+      height: auto;
+    }
   </style>
 </head>
 <body>
+  <div id="loading-screen">
+    <img src="judy.png" alt="Loading...">
+  </div>
   <main class="container">
-    <h1>Property Listings</h1>
+    <h1>MILF Estate</h1>
 
     <details>
       <summary>Filter</summary>
@@ -111,8 +139,7 @@
       <button id="next-page">Next &raquo;</button>
     </div>
 
-    <hr>
-    <div id="row-content"></div>
+    
   </main>
 
   <script>
@@ -187,41 +214,34 @@
         const div = document.createElement("div");
         div.className = "listing";
         div.innerHTML = `
-          <article>
-            <strong>${data["Property name"] || "Unnamed Property"}</strong><br>
-            Type: ${data["Property type"] || ""} | Location: ${data["Location"] || ""} | Price: ${data["Price"] || ""}
+          <article class="listing-grid">
+            <header style="grid-column: span 2">
+              <strong>${data["Property name"] || "Unnamed Property"}</strong>
+              <small>${data["New Code"] || ""}</small>
+            </header>
+            <div>
+              <strong>Type:</strong> ${data["Property type"] || ""}<br>
+              <strong>Location:</strong> ${data["Location"] || ""}<br>
+              <strong>Unit/Floor:</strong> ${data["Unit No."] || ""} / ${data["Floor"] || ""}<br>
+              <strong>Area:</strong> ${data["Area Sqm."] || ""} m&sup2;<br>
+              <strong>Price:</strong> ${data["Price"] || "Contact us"}
+            </div>
+            <div>
+              <strong>Bedrooms:</strong> ${data["Bedroom"] || ""}<br>
+              <strong>Bathrooms:</strong> ${data["Bathroom"] || ""}<br>
+              ${data["Pic"] ? `<a href="${data["Pic"]}" target="_blank">Photos</a><br>` : ""}
+              ${data["Remarks /ทิศ & วิว"] ? `<em>${data["Remarks /ทิศ & วิว"]}</em><br>` : ""}
+              ${data["Sale/rent conditions  eg. Transfer free etc."] ? `<small>${data["Sale/rent conditions  eg. Transfer free etc."]}</small>` : ""}
+            </div>
           </article>
         `;
-        div.addEventListener("click", () => renderDetail(row));
         container.appendChild(div);
       });
 
       document.getElementById("page-info").textContent = `Page ${currentPage} of ${Math.ceil(listings.length / pageSize)}`;
     }
 
-    function renderDetail(row) {
-      const contentDiv = document.getElementById("row-content");
-      const data = {};
-      headers.forEach((header, i) => {
-        data[header] = row[i] ? row[i].trim() : '';
-      });
-
-      contentDiv.innerHTML = `
-        <article>
-          <h2>${data["Property name"] || "Unnamed Property"}</h2>
-          <h4>Type: ${data["Property type"] || "Unknown Type"}</h4>
-          ${data["Pic"] ? `<p><a href="${data["Pic"]}" target="_blank" rel="noopener">View Pictures</a></p>` : ''}
-          <p>Location: ${data["Location"] || ""}</p>
-          <p>Unit: ${data["Unit No."] || ""}, Floor: ${data["Floor"] || ""}</p>
-          <p>Bedrooms: ${data["Bedroom"] || ""}, Bathrooms: ${data["Bathroom"] || ""}</p>
-          <p>Area: ${data["Area Sqm."] || ""} m&sup2;</p>
-          <h3>Price: ${data["Price"] || "Contact us"}</h3>
-          ${data["Remarks /ทิศ & วิว"] ? `<p>Remarks: ${data["Remarks /ทิศ & วิว"]}</p>` : ''}
-          ${data["Sale/rent conditions  eg. Transfer free etc."] ? `<p>Conditions: ${data["Sale/rent conditions  eg. Transfer free etc."]}</p>` : ''}
-        </article>
-      `;
-    }
-
+    
     fetch(sheetUrl)
       .then(res => res.blob())
       .then(blob => blob.text())
@@ -231,6 +251,7 @@
         window.allRows = parsed.data.slice(1);
         listings = window.allRows;
         renderListings();
+        document.getElementById("loading-screen").style.display = "none";
       });
 
     document.getElementById("prev-page").addEventListener("click", () => {
