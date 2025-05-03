@@ -41,13 +41,49 @@
           Location:
           <input type="text" name="Location">
         </label>
+        <div class="grid">
+          <label>
+            Min Price:
+            <input type="number" name="minPrice">
+          </label>
+          <label>
+            Max Price:
+            <input type="number" name="maxPrice">
+          </label>
+        </div>
+        <div class="grid">
+          <label>
+            Min Area (sqm):
+            <input type="number" name="minArea">
+          </label>
+          <label>
+            Max Area (sqm):
+            <input type="number" name="maxArea">
+          </label>
+        </div>
+        <div class="grid">
+          <label>
+            Min Bedrooms:
+            <input type="number" name="minBedrooms">
+          </label>
+          <label>
+            Max Bedrooms:
+            <input type="number" name="maxBedrooms">
+          </label>
+        </div>
+        <div class="grid">
+          <label>
+            Min Bathrooms:
+            <input type="number" name="minBathrooms">
+          </label>
+          <label>
+            Max Bathrooms:
+            <input type="number" name="maxBathrooms">
+          </label>
+        </div>
         <label>
-          Min Price:
-          <input type="number" name="minPrice">
-        </label>
-        <label>
-          Max Price:
-          <input type="number" name="maxPrice">
+          ID (New Code):
+          <input type="text" name="New Code">
         </label>
         <button type="submit">Apply Filter</button>
       </form>
@@ -86,47 +122,55 @@
     let currentPage = 1;
     const pageSize = 20;
 
-    const HEADER_MAP = {
-      "Property name": "Property name",
-      "Property type": "Property type",
-      "Location": "Location",
-      "Unit No.": "Unit No.",
-      "Floor": "Floor",
-      "Bedroom": "Bedroom",
-      "Bathroom": "Bathroom",
-      "Area Sqm.": "Area Sqm.",
-      "Price": "Price",
-      "Pic": "Pic",
-      "Remarks /ทิศ & วิว": "Remarks /ทิศ & วิว",
-      "Sale/rent conditions  eg. Transfer free etc.": "Sale/rent conditions  eg. Transfer free etc."
-    };
-
     function normalizeHeaders(inputHeaders) {
-      const cleaned = inputHeaders.map(h => h.trim());
-      const missing = Object.values(HEADER_MAP).filter(expected => !cleaned.includes(expected));
-      if (missing.length > 0) {
-        console.warn("Missing headers:", missing);
-      }
-      return cleaned;
+      return inputHeaders.map(h => h.trim());
     }
 
-    function sortListings() {
-      const sortField = document.getElementById("sort-field").value;
-      const desc = document.getElementById("sort-desc").checked;
-      if (!sortField) return;
-      listings.sort((a, b) => {
-        const aVal = (a[headers.indexOf(sortField)] || "").toLowerCase();
-        const bVal = (b[headers.indexOf(sortField)] || "").toLowerCase();
-        const aNum = parseFloat(aVal.replace(/[^0-9.]/g, "")) || 0;
-        const bNum = parseFloat(bVal.replace(/[^0-9.]/g, "")) || 0;
-        const isNumeric = !isNaN(aNum) && !isNaN(bNum);
-        if (isNumeric) return desc ? bNum - aNum : aNum - bNum;
-        return desc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+    function applyFilter(formData) {
+      listings = window.allRows.filter(row => {
+        const map = {};
+        headers.forEach((h, i) => map[h] = row[i] ? row[i].trim() : '');
+
+        const price = parseInt(map["Price"].replace(/[^0-9]/g, "")) || 0;
+        const area = parseFloat(map["Area Sqm."]) || 0;
+        const bedrooms = parseInt(map["Bedroom"] || 0);
+        const bathrooms = parseInt(map["Bathroom"] || 0);
+
+        const minBedrooms = parseInt(formData["minBedrooms"] || 0);
+        const maxBedrooms = parseInt(formData["maxBedrooms"] || 9999);
+        const minBathrooms = parseInt(formData["minBathrooms"] || 0);
+        const maxBathrooms = parseInt(formData["maxBathrooms"] || 9999);
+
+        return (
+          (!formData["Property type"] || map["Property type"].toLowerCase().includes(formData["Property type"].toLowerCase())) &&
+          (!formData["Location"] || map["Location"].toLowerCase().includes(formData["Location"].toLowerCase())) &&
+          (!formData["minPrice"] || price >= parseInt(formData["minPrice"])) &&
+          (!formData["maxPrice"] || price <= parseInt(formData["maxPrice"])) &&
+          bedrooms >= minBedrooms && bedrooms <= maxBedrooms &&
+          bathrooms >= minBathrooms && bathrooms <= maxBathrooms &&
+          (!formData["minArea"] || area >= parseFloat(formData["minArea"])) &&
+          (!formData["maxArea"] || area <= parseFloat(formData["maxArea"])) &&
+          (!formData["New Code"] || map["New Code"].toLowerCase().includes(formData["New Code"].toLowerCase()))
+        );
       });
+      currentPage = 1;
+      renderListings();
     }
 
     function renderListings() {
-      sortListings();
+      const sortField = document.getElementById("sort-field").value;
+      const desc = document.getElementById("sort-desc").checked;
+      if (sortField) {
+        listings.sort((a, b) => {
+          const aVal = (a[headers.indexOf(sortField)] || '').toLowerCase();
+          const bVal = (b[headers.indexOf(sortField)] || '').toLowerCase();
+          const aNum = parseFloat(aVal.replace(/[^0-9.]/g, "")) || 0;
+          const bNum = parseFloat(bVal.replace(/[^0-9.]/g, "")) || 0;
+          const isNumeric = !isNaN(aNum) && !isNaN(bNum);
+          return isNumeric ? (desc ? bNum - aNum : aNum - bNum) : (desc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal));
+        });
+      }
+
       const start = (currentPage - 1) * pageSize;
       const end = start + pageSize;
       const visible = listings.slice(start, end);
@@ -137,7 +181,7 @@
       visible.forEach((row) => {
         const data = {};
         headers.forEach((header, i) => {
-          data[header.trim()] = row[i] ? row[i].trim() : '';
+          data[header] = row[i] ? row[i].trim() : '';
         });
 
         const div = document.createElement("div");
@@ -159,7 +203,7 @@
       const contentDiv = document.getElementById("row-content");
       const data = {};
       headers.forEach((header, i) => {
-        data[header.trim()] = row[i] ? row[i].trim() : '';
+        data[header] = row[i] ? row[i].trim() : '';
       });
 
       contentDiv.innerHTML = `
@@ -176,23 +220,6 @@
           ${data["Sale/rent conditions  eg. Transfer free etc."] ? `<p>Conditions: ${data["Sale/rent conditions  eg. Transfer free etc."]}</p>` : ''}
         </article>
       `;
-    }
-
-    function applyFilter(formData) {
-      listings = window.allRows.filter(row => {
-        const map = {};
-        headers.forEach((h, i) => map[h.trim()] = row[i] ? row[i].trim() : '');
-
-        const typeOk = !formData["Property type"] || map["Property type"].toLowerCase().includes(formData["Property type"].toLowerCase());
-        const locOk = !formData["Location"] || map["Location"].toLowerCase().includes(formData["Location"].toLowerCase());
-        const price = parseInt(map["Price"].replace(/[^0-9]/g, "")) || 0;
-        const minOk = !formData.minPrice || price >= parseInt(formData.minPrice);
-        const maxOk = !formData.maxPrice || price <= parseInt(formData.maxPrice);
-
-        return typeOk && locOk && minOk && maxOk;
-      });
-      currentPage = 1;
-      renderListings();
     }
 
     fetch(sheetUrl)
@@ -226,12 +253,8 @@
       applyFilter(formData);
     });
 
-    document.getElementById("sort-field").addEventListener("change", () => {
-      renderListings();
-    });
-    document.getElementById("sort-desc").addEventListener("change", () => {
-      renderListings();
-    });
+    document.getElementById("sort-field").addEventListener("change", renderListings);
+    document.getElementById("sort-desc").addEventListener("change", renderListings);
   </script>
 </body>
 </html>

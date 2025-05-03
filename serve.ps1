@@ -4,7 +4,7 @@ $Listener.Start()
 while ($Listener.IsListening) {
     $context = $Listener.GetContext()
     $response = $context.Response
-    $html = Get-Content "index2.html" -Raw
+    $html = Get-Content "index.html" -Raw
     $buffer = [System.Text.Encoding]::UTF8.GetBytes($html)
     $response.ContentLength64 = $buffer.Length
     $response.OutputStream.Write($buffer, 0, $buffer.Length)
