@@ -37,17 +37,34 @@
       position: fixed;
       top: 0;
       left: 0;
-      width: 100vw;
+      width: 90vw;
       height: 100vh;
-      background: white;
+      background: var(--pico-background-color, #fff);
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 9999;
+      z-index: 9999;$1
     }
     #loading-screen img {
-      max-width: 200px;
+      max-width: 400px;
       height: auto;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+      @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+      .id-tag {
+      position: absolute;
+      left: 1rem;
+      bottom: 1rem;
+      font-size: 0.7em;
+      background-color: #444;
+      color: #fff;
+      padding: 0.2em 0.4em;
+      border-radius: 4px;
+      opacity: 0.8;
     }
   </style>
 </head>
@@ -117,27 +134,26 @@
       </form>
     </details>
 
-    <div class="sort-controls">
-      <label>
-        Sort by:
-        <select id="sort-field">
-          <option value="">(none)</option>
-          <option value="Property name">Name</option>
-          <option value="Property type">Type</option>
-          <option value="Price">Price</option>
-        </select>
-      </label>
-      <label>
-        <input type="checkbox" id="sort-desc"> Descending
-      </label>
-    </div>
+    <details>
+      <summary>Sort Options</summary>
+      <div class="sort-controls">
+        <label>
+          Sort by:
+          <select id="sort-field">
+            <option value="">(none)</option>
+            <option value="Property name">Name</option>
+            <option value="Property type">Type</option>
+            <option value="Price">Price</option>
+          </select>
+        </label>
+        <label>
+          <input type="checkbox" id="sort-desc"> Descending
+        </label>
+      </div>
+    </details>
 
     <div id="listings"></div>
-    <div class="pagination">
-      <button id="prev-page">&laquo; Previous</button>
-      <span id="page-info"></span>
-      <button id="next-page">Next &raquo;</button>
-    </div>
+    <div class="pagination" id="pagination"></div>
 
     
   </main>
@@ -214,17 +230,17 @@
         const div = document.createElement("div");
         div.className = "listing";
         div.innerHTML = `
-          <article class="listing-grid">
+          <article class="listing-grid" style="position: relative;">
             <header style="grid-column: span 2">
-              <strong>${data["Property name"] || "Unnamed Property"}</strong>
-              <small>${data["New Code"] || ""}</small>
+              <strong>${data["Property name"] || "Unnamed Property"}</strong><br>
+              <small>${data["Location"] || ""}</small><br>
+              <small class="id-tag">${data["New Code"] || ""}</small>
+              <small><strong>Price:</strong> ${data["Price"] || "Contact us"}</small>
             </header>
             <div>
               <strong>Type:</strong> ${data["Property type"] || ""}<br>
-              <strong>Location:</strong> ${data["Location"] || ""}<br>
-              <strong>Unit/Floor:</strong> ${data["Unit No."] || ""} / ${data["Floor"] || ""}<br>
-              <strong>Area:</strong> ${data["Area Sqm."] || ""} m&sup2;<br>
-              <strong>Price:</strong> ${data["Price"] || "Contact us"}
+                            <strong>Unit/Floor:</strong> ${data["Unit No."] || ""} / ${data["Floor"] || ""}<br>
+              <strong>Area:</strong> ${data["Area Sqm."] || ""} m&sup2;
             </div>
             <div>
               <strong>Bedrooms:</strong> ${data["Bedroom"] || ""}<br>
@@ -238,7 +254,44 @@
         container.appendChild(div);
       });
 
-      document.getElementById("page-info").textContent = `Page ${currentPage} of ${Math.ceil(listings.length / pageSize)}`;
+      const totalPages = Math.ceil(listings.length / pageSize);
+      const pagination = document.getElementById("pagination");
+      pagination.innerHTML = "";
+
+      function createPageButton(label, page, isActive = false) {
+        const btn = document.createElement("button");
+        btn.textContent = label;
+        if (isActive) btn.setAttribute("aria-current", "page");
+        btn.addEventListener("click", () => {
+          currentPage = page;
+          renderListings();
+        });
+        return btn;
+      }
+
+      if (currentPage > 1) pagination.appendChild(createPageButton("First", 1));
+      if (currentPage > 1) pagination.appendChild(createPageButton("Prev", currentPage - 1));
+
+      const range = 2; // pages before and after current
+      let startPage = Math.max(1, currentPage - range);
+      let endPage = Math.min(totalPages, currentPage + range);
+
+      if (startPage > 1) {
+        pagination.appendChild(createPageButton("1", 1));
+        if (startPage > 2) pagination.appendChild(document.createTextNode("..."));
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        pagination.appendChild(createPageButton(i, i, i === currentPage));
+      }
+
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) pagination.appendChild(document.createTextNode("..."));
+        pagination.appendChild(createPageButton(totalPages, totalPages));
+      }
+
+      if (currentPage < totalPages) pagination.appendChild(createPageButton("Next", currentPage + 1));
+      if (currentPage < totalPages) pagination.appendChild(createPageButton("Last", totalPages));
     }
 
     
@@ -254,21 +307,7 @@
         document.getElementById("loading-screen").style.display = "none";
       });
 
-    document.getElementById("prev-page").addEventListener("click", () => {
-      if (currentPage > 1) {
-        currentPage--;
-        renderListings();
-      }
-    });
-
-    document.getElementById("next-page").addEventListener("click", () => {
-      if (currentPage * pageSize < listings.length) {
-        currentPage++;
-        renderListings();
-      }
-    });
-
-    document.getElementById("filter-form").addEventListener("submit", e => {
+            document.getElementById("filter-form").addEventListener("submit", e => {
       e.preventDefault();
       const formData = Object.fromEntries(new FormData(e.target).entries());
       applyFilter(formData);
