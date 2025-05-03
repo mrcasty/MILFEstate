@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Row Viewer</title>
   <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
+  <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
   <main class="container">
@@ -12,49 +13,53 @@
     <a href="index.html">← Back</a>
   </main>
 
-  <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
   <script>
-  const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4zi8Hcg6gWlEzMOexYMcRaPtBUbI4VT-VMI-GO_4xXIyWJHJgwfS5cUIkiid-4E_XpvVniMRRtyEi/pub?output=csv";
-  
-  const urlParams = new URLSearchParams(window.location.search);
-  const requestedRow = parseInt(urlParams.get("row"));
-  
-  fetch(sheetUrl)
-    .then(res => res.text())
-    .then(csv => {
-      const parsed = Papa.parse(csv.trim(), { skipEmptyLines: true });
-      const lines = parsed.data;
-      const headers = lines[0];
-      const dataRow = lines[requestedRow];
-  
-      const contentDiv = document.getElementById("row-content");
-  
-      if (isNaN(requestedRow) || requestedRow < 1 || requestedRow >= lines.length) {
-        contentDiv.innerHTML = "<p><strong>Error:</strong> Invalid row requested.</p>";
-        return;
-      }
-  
-      const data = {};
-      headers.forEach((header, i) => {
-        data[header.trim()] = dataRow[i] ? dataRow[i].trim() : '';
+    const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRW428ymgIgdzbRhVIs-oPZ2s8rhln-Q7X-k8v8pFzE3EqiSZ5xRPMdxiz5LJUC17Dp0pWHB8OGN77J/pub?gid=1412368678&single=true&output=csv";
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const requestedRow = parseInt(urlParams.get("row"));
+
+    fetch(sheetUrl)
+      .then(res => res.text())
+      .then(csv => {
+        const parsed = Papa.parse(csv.trim(), { skipEmptyLines: true });
+        const lines = parsed.data;
+        const headers = lines[0];
+        const dataRow = lines[requestedRow];
+
+        const contentDiv = document.getElementById("row-content");
+
+        if (isNaN(requestedRow) || requestedRow < 1 || requestedRow >= lines.length) {
+          contentDiv.innerHTML = "<p><strong>Error:</strong> Invalid row requested.</p>";
+          return;
+        }
+
+        const data = {};
+        headers.forEach((header, i) => {
+          data[header.trim()] = dataRow[i] ? dataRow[i].trim() : '';
+        });
+
+        const html = `
+          <article>
+            <h2>${data["Preoperty name"] || "Unnamed Property"}</h2>
+            <h4>Type: ${data["Property type"] || "Unknown Type"}</h4>
+            ${data["Pic"] ? `<p><a href="${data["Pic"]}" target="_blank" rel="noopener">View Pictures</a></p>` : ''}
+            <p>Location: ${data["Location"] || ""}</p>
+            <p>Unit: ${data["Unit No."] || ""}, Floor: ${data["Floor"] || ""}</p>
+            <p>Bedrooms: ${data["Bedroom"] || ""}, Bathrooms: ${data["Bathroom"] || ""}</p>
+            <p>Area: ${data["Area Sqm."] || ""} m²</p>
+            <h3>Price: ${data["Price"] || "Contact us"}</h3>
+            ${data["Remarks /ทิศ & วิว"] ? `<p>Remarks: ${data["Remarks /ทิศ & วิว"]}</p>` : ''}
+            ${data["Sale/rent conditions  eg. Transfer free etc."] ? `<p>Conditions: ${data["Sale/rent conditions  eg. Transfer free etc."]}</p>` : ''}
+          </article>
+        `;
+
+        contentDiv.innerHTML = html;
+      })
+      .catch(err => {
+        console.error("Fetch failed:", err);
+        document.getElementById("row-content").innerHTML = "<p>Error loading spreadsheet.</p>";
       });
-  
-      const html = `
-        <article>
-          <h2>${data["Property name"] || "Unnamed Property"}</h2>
-          <h4>Type: ${data["Property type"] || "Unknown Type"}</h4>
-          ${data["Pic"] ? `<p><a href="${data["Pic"]}" target="_blank" rel="noopener">View Pictures</a></p>` : ''}
-          <p>${data["Note 1"] || ""}</p>
-          <h3>Price: ${data["Price"] || "Contact us"}</h3>
-        </article>
-      `;
-  
-      contentDiv.innerHTML = html;
-    })
-    .catch(err => {
-      console.error("Fetch failed:", err);
-      document.getElementById("row-content").innerHTML = "<p>Error loading spreadsheet.</p>";
-    });
   </script>
 </body>
 </html>
