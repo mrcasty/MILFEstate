@@ -90,6 +90,10 @@
           <input type="text" name="Property type">
         </label>
         <label>
+          Property Name:
+          <input type="text" name="Property name">
+        </label>
+        <label>
           Location:
           <input type="text" name="Location">
         </label>
@@ -192,6 +196,7 @@
         const maxBathrooms = parseInt(formData["maxBathrooms"] || 9999);
 
         return (
+          (!formData["Property name"] || map["Property name"].toLowerCase().includes(formData["Property name"].toLowerCase())) &&
           (!formData["Property type"] || map["Property type"].toLowerCase().includes(formData["Property type"].toLowerCase())) &&
           (!formData["Location"] || map["Location"].toLowerCase().includes(formData["Location"].toLowerCase())) &&
           (!formData["minPrice"] || price >= parseInt(formData["minPrice"])) &&
@@ -246,7 +251,7 @@
             </header>
             <div>
               <strong>Type:</strong> ${data["Property type"] || ""}<br>
-                            <strong>Unit/Floor:</strong> ${data["Unit No."] || ""} / ${data["Floor"] || ""}<br>
+              <strong>Unit/Floor:</strong> ${data["Unit No."] || ""} / ${data["Floor"] || ""}<br>
               <strong>Area:</strong> ${data["Area Sqm."] || ""} m&sup2;
             </div>
             <div>
