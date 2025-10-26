@@ -239,6 +239,10 @@
           data[header] = row[i] ? row[i].trim() : '';
         });
 
+        const ownerName = data["owner name"] || data["Owner name"] || data["Owner Name"] || "";
+        const phoneNumber = data["Phone no."] || data["Phone No."] || data["phone no."] || data["Phone"] || "";
+        const phoneHref = phoneNumber ? phoneNumber.replace(/[^0-9+]/g, "") : "";
+
         const div = document.createElement("div");
         div.className = "listing";
         div.innerHTML = `
@@ -260,6 +264,10 @@
               ${data["Pic"] ? `<a href="${data["Pic"]}" target="_blank">Photos</a><br>` : ""}
               ${data["Remarks /ทิศ & วิว"] ? `<em>${data["Remarks /ทิศ & วิว"]}</em><br>` : ""}
               ${data["Sale/rent conditions  eg. Transfer free etc."] ? `<small>${data["Sale/rent conditions  eg. Transfer free etc."]}</small>` : ""}
+            </div>
+            <div>
+              <strong>Owner:</strong> ${ownerName || "Not provided"}<br>
+              ${phoneNumber ? `<strong>Phone:</strong> <a href="tel:${phoneHref}">${phoneNumber}</a>` : `<span style="color: var(--pico-muted-color); font-size: 0.85em;">Phone pending</span>`}
             </div>
           </article>
         `;
