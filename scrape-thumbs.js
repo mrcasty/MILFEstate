@@ -15,6 +15,7 @@ const SHEET_URL =
 const MAP_FILE = path.join(__dirname, "thumb-map.json");
 const CONCURRENCY = parseInt(process.argv.find((_, i, a) => a[i - 1] === "--concurrency") || "10");
 const LIMIT = parseInt(process.argv.find((_, i, a) => a[i - 1] === "--limit") || "0");
+const LAST = process.argv.includes("--last");
 
 function fetchText(url) {
   return new Promise((resolve, reject) => {
@@ -85,7 +86,8 @@ async function runBatch(ids, concurrency, map, onProgress) {
   const { body: csv } = await fetchText(SHEET_URL);
   const allIds = parseCSVIds(csv);
   let todo = allIds.filter((id) => !map[id]);
-  if (LIMIT > 0) todo = todo.slice(0, LIMIT);
+  if (LAST) todo = todo.slice(-Math.abs(LIMIT || 100));
+  else if (LIMIT > 0) todo = todo.slice(0, LIMIT);
   console.log(`${allIds.length} listings, ${Object.keys(map).length} cached, ${todo.length} to scrape${LIMIT ? ` (limited to ${LIMIT})` : ""}`);
 
   if (todo.length === 0) {
