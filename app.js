@@ -4,24 +4,37 @@ const PAGE_SIZE = 16;
 let allProperties = [];
 let filtered = [];
 let currentPage = 1;
+let thumbMap = {};
+
 /* ── Parse CSV and deduplicate to primary rows ── */
 function loadData() {
-  Papa.parse(SHEET_URL, {
-    download: true,
-    header: true,
-    skipEmptyLines: true,
-    complete(result) {
+  const thumbPromise = fetch("thumb-map.json")
+    .then(r => r.ok ? r.json() : {})
+    .catch(() => ({}));
+
+  const csvPromise = new Promise((resolve, reject) => {
+    Papa.parse(SHEET_URL, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: resolve,
+      error: reject
+    });
+  });
+
+  Promise.all([thumbPromise, csvPromise])
+    .then(([thumbs, result]) => {
+      thumbMap = thumbs;
       allProperties = result.data.filter(r => r.structure && r.structure.trim());
       filtered = allProperties.slice();
       renderPage();
       document.getElementById("loading-screen").style.display = "none";
-    },
-    error(err) {
-      console.error("CSV load error:", err);
+    })
+    .catch(err => {
+      console.error("Load error:", err);
       document.getElementById("loading-screen").innerHTML =
         '<p style="color:#f66;text-align:center">Failed to load data</p>';
-    }
-  });
+    });
 }
 
 /* ── Status → badge class ── */
@@ -82,7 +95,7 @@ function renderPage() {
         <div class="card-thumb" style="cursor:pointer"
              onclick="openPhotos('${photos.replace(/'/g,"\\'")}', '${(p.structure||'').trim().replace(/'/g,"\\'")}', '${id}')">
           <div class="spinner"></div>
-          <img src="thumbs/${id}.webp" loading="lazy"
+          <img src="${thumbMap[id] || ''}" loading="lazy"
                alt="${(p.structure||'').trim()}"
                onload="this.previousElementSibling.style.display='none'"
                onerror="this.previousElementSibling.style.display='none'; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23555%22 font-size=%2214%22>No photo</text></svg>'">
