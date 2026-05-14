@@ -17,7 +17,7 @@ const SHEET_URL =
 const MAP_FILE = path.join(__dirname, "thumb-map.json");
 const THUMB_DIR = path.join(__dirname, "thumbs");
 const THUMB_WIDTH = 200;
-const CONCURRENCY = parseInt(process.argv.find((_, i, a) => a[i - 1] === "--concurrency") || "10");
+const CONCURRENCY = parseInt(process.argv.find((_, i, a) => a[i - 1] === "--concurrency") || "5");
 const LIMIT = parseInt(process.argv.find((_, i, a) => a[i - 1] === "--limit") || "0");
 
 let sharp;
