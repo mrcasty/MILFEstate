@@ -82,7 +82,7 @@ function renderPage() {
         <div class="card-thumb" style="cursor:pointer"
              onclick="openPhotos('${photos.replace(/'/g,"\\'")}', '${(p.structure||'').trim().replace(/'/g,"\\'")}', '${id}')">
           <div class="spinner"></div>
-          <img data-src="thumbs/${id}.webp" loading="lazy"
+          <img src="thumbs/${id}.webp" loading="lazy"
                alt="${(p.structure||'').trim()}"
                onload="this.previousElementSibling.style.display='none'"
                onerror="this.previousElementSibling.style.display='none'; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23555%22 font-size=%2214%22>No photo</text></svg>'">
@@ -106,18 +106,6 @@ function renderPage() {
         </div>
       </div>`;
   }).join("");
-
-  grid.querySelectorAll("img[data-src]").forEach(img => {
-    const obs = new IntersectionObserver((entries, observer) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          img.src = img.dataset.src;
-          observer.disconnect();
-        }
-      });
-    }, { rootMargin: "200px" });
-    obs.observe(img);
-  });
 
   renderPagination();
 }
