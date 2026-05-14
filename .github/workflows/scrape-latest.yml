@@ -1,4 +1,4 @@
-name: Quick scrape (latest 100)
+name: Scrape photos (latest 100)
 
 on:
   workflow_dispatch:

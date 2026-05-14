@@ -1,4 +1,4 @@
-name: Update thumbnail map
+name: Scrape photos (all)
 
 on:
   schedule:
