@@ -1,27 +1,55 @@
 # MILFEstate
 
-MILFEstate is a single-page property browser that surfaces listings from a curated Google Sheet. Agents can filter, sort, and page through inventory directly in the browser without maintaining a database or backend service.
+Property browser for Bangkok real estate listings. Pulls live data from a Google Sheet and displays it as a card grid with photo thumbnails.
+
+**Live site:** https://mrcasty.github.io/MILFEstate/
 
 ## Features
-- Client-side filtering by property name, type, location, price range, bedroom/bathroom counts, and floor area.
-- Sort controls for any sheet column with optional descending toggle.
-- Paginated results with a lightweight loading experience and quick links to asset photos.
-- `view.html` detail page for deep-linking to individual rows in the data source.
+- Card grid with lazy-loaded photo thumbnails
+- Filters: building name, status, rent/sale price, bedrooms, bathrooms, floor area, room/ID
+- Sort by building, rent, sale price, area, or bedrooms
+- 16 listings per page with pagination
+- Photo overlay — click a card to view the full gallery without leaving the page
+- Color-coded status badges (Available, Upcoming, To Check, etc.)
 
-## Getting Started
-1. Install [PowerShell 7+](https://learn.microsoft.com/powershell/scripting/install/installing-powershell), if not already available.
-2. From the repository root, run the local server:
-   ```powershell
-   pwsh ./serve.ps1
-   ```
-3. Open `http://localhost:8080` in your browser to browse the latest sheet data.
+## How It Works
+- **Data:** live CSV from a published Google Sheet (updated by Judy)
+- **Photos:** first image URL for each listing is scraped from reverse.estate and cached in `thumb-map.json`
+- **Hosting:** GitHub Pages (static, no backend)
 
-To view a specific row, navigate to `view.html?row=<rowIndex>`, where `<rowIndex>` matches the 1-based row number from the sheet (excluding the header).
+## Files
+| File | Purpose |
+|------|---------|
+| `index.html` | Page markup |
+| `style.css` | Styles |
+| `app.js` | App logic (CSV loading, cards, filters, pagination, overlay) |
+| `serve.ps1` | Local dev server |
+| `scrape-thumbs.js` | Node.js scraper for GitHub Actions |
+| `scrape-thumbs.ps1` | PowerShell scraper for local use |
+| `thumb-map.json` | Generated map of listing ID to photo URL |
 
-## Data Source
-Both pages pull from published Google Sheets CSV exports. Update the spreadsheet if you need to change inventory; the site will reflect updates on the next reload. If column names change, mirror those updates in the JavaScript header mappings before publishing.
+## GitHub Actions
+Two workflows keep `thumb-map.json` up to date:
 
-## Development Notes
-- The interface relies on [Pico.css](https://picocss.com) for styling and [Papa Parse](https://www.papaparse.com) for CSV parsing.
-- Keep indentation at two spaces and follow the inline scripting pattern used in `index.html`.
-- Test changes by exercising all filters, verifying pagination, and ensuring images/links remain valid.
+- **Scrape photos (all)** — runs daily at 13:00 Bangkok time, processes all new listings
+- **Scrape photos (latest 100)** — manual one-click for quick updates after new listings are added
+
+Trigger manually from the [Actions tab](https://github.com/mrcasty/MILFEstate/actions).
+
+## Local Development
+```powershell
+# Start the server
+pwsh ./serve.ps1
+# Open http://localhost:8080
+
+# Scrape latest 100 photo URLs
+pwsh ./scrape-thumbs.ps1 -Last -Limit 100
+
+# Full scrape
+pwsh ./scrape-thumbs.ps1
+```
+
+## Stack
+- [Pico.css](https://picocss.com) — styling
+- [Papa Parse](https://www.papaparse.com) — CSV parsing
+- GitHub Actions + GitHub Pages — automation and hosting
