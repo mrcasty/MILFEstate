@@ -1,340 +1,101 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <title>Property Browser</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MILF Estate</title>
   <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
+  <link rel="stylesheet" href="style.css">
   <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
-  <style>
-    details summary {
-      cursor: pointer;
-    }
-    .pagination {
-      display: flex;
-      justify-content: center;
-      gap: 0.75rem;
-      margin-top: 2rem;
-    }
-    .listing {
-      cursor: pointer;
-    }
-    .sort-controls {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-      article.listing-grid > div {
-      font-size: 0.85em;
-    }
-
-    article.listing-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1rem;
-      align-items: start;
-    }
-    article.listing-grid header {
-      grid-column: 1 / -1;
-    }
-      #loading-screen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: var(--pico-background-color, #0f172a);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-    }
-    #loading-screen img {
-      max-width: 600px;
-      height: auto;
-      animation: pulse 1.5s infinite ease-in-out;
-    }
-      @keyframes pulse {
-      0% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.05); opacity: 0.8; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-      .id-tag {
-      position: absolute;
-      left: 1rem;
-      bottom: 1rem;
-      font-size: 0.7em;
-      background-color: #444;
-      color: #fff;
-      padding: 0.2em 0.4em;
-      border-radius: 4px;
-      opacity: 0.8;
-    }
-  </style>
 </head>
 <body>
+
+  <!-- Loading screen -->
   <div id="loading-screen">
-    <div style="text-align: center">
+    <div style="text-align:center">
       <img src="judy.png" alt="Loading...">
-      <p style="color: white; font-weight: bold; margin-top: 1rem;">Loading...</p>
+      <p style="color:#fff; font-weight:bold; margin-top:1rem">Loading listings...</p>
     </div>
   </div>
+
   <main class="container">
     <h1>MILF Estate</h1>
 
+    <!-- Filters -->
     <details>
-      <summary>Filter</summary>
-      <form id="filter-form">
-        <label>
-          Property Type:
-          <input type="text" name="Property type">
-        </label>
-        <label>
-          Property Name:
-          <input type="text" name="Property name">
-        </label>
-        <label>
-          Location:
-          <input type="text" name="Location">
-        </label>
-        <div class="grid">
-          <label>
-            Min Price:
-            <input type="number" name="minPrice">
-          </label>
-          <label>
-            Max Price:
-            <input type="number" name="maxPrice">
+      <summary>Filters</summary>
+      <form id="filter-form" style="margin-top:.5rem">
+        <div class="filter-row">
+          <label>Building <input type="text" name="structure" placeholder="e.g. Sukhumvit"></label>
+          <label>Status
+            <select name="status">
+              <option value="">All</option>
+              <option value="Available">Available</option>
+              <option value="Upcoming">Upcoming</option>
+              <option value="To Check">To Check</option>
+              <option value="Not Available">Not Available</option>
+              <option value="Sale W.Tenant">Sale W.Tenant</option>
+              <option value="Sale R.T.M.I.">Sale R.T.M.I.</option>
+            </select>
           </label>
         </div>
-        <div class="grid">
-          <label>
-            Min Area (sqm):
-            <input type="number" name="minArea">
-          </label>
-          <label>
-            Max Area (sqm):
-            <input type="number" name="maxArea">
-          </label>
+        <div class="filter-row">
+          <label>Min Rent <input type="number" name="minRent" placeholder="0"></label>
+          <label>Max Rent <input type="number" name="maxRent" placeholder="any"></label>
+          <label>Min Sale <input type="number" name="minSale" placeholder="0"></label>
+          <label>Max Sale <input type="number" name="maxSale" placeholder="any"></label>
         </div>
-        <div class="grid">
-          <label>
-            Min Bedrooms:
-            <input type="number" name="minBedrooms">
-          </label>
-          <label>
-            Max Bedrooms:
-            <input type="number" name="maxBedrooms">
-          </label>
+        <div class="filter-row">
+          <label>Bedrooms (min) <input type="number" name="minBed" placeholder="0"></label>
+          <label>Bedrooms (max) <input type="number" name="maxBed" placeholder="any"></label>
+          <label>Bathrooms (min) <input type="number" name="minBath" placeholder="0"></label>
+          <label>Bathrooms (max) <input type="number" name="maxBath" placeholder="any"></label>
         </div>
-        <div class="grid">
-          <label>
-            Min Bathrooms:
-            <input type="number" name="minBathrooms">
-          </label>
-          <label>
-            Max Bathrooms:
-            <input type="number" name="maxBathrooms">
-          </label>
+        <div class="filter-row">
+          <label>Min SQm <input type="number" name="minSqm" placeholder="0"></label>
+          <label>Max SQm <input type="number" name="maxSqm" placeholder="any"></label>
         </div>
-        <label>
-          ID (New Code):
-          <input type="text" name="New Code">
-        </label>
-        <button type="submit">Apply Filter</button>
+        <div class="filter-row" style="margin-top:.5rem">
+          <label>Room / ID <input type="text" name="idSearch" placeholder="e.g. 123"></label>
+          <button type="submit" style="flex:0">Apply</button>
+          <button type="button" id="clear-btn" class="secondary" style="flex:0">Clear</button>
+        </div>
       </form>
     </details>
 
+    <!-- Sort -->
     <details>
-      <summary>Sort Options</summary>
-      <div class="sort-controls">
-        <label>
-          Sort by:
+      <summary>Sort</summary>
+      <div class="filter-row" style="margin-top:.5rem">
+        <label>Sort by
           <select id="sort-field">
             <option value="">(none)</option>
-            <option value="Property name">Name</option>
-            <option value="Property type">Type</option>
-            <option value="Price">Price</option>
+            <option value="structure">Building</option>
+            <option value="rent">Rent</option>
+            <option value="sale">Sale Price</option>
+            <option value="SQm">Area</option>
+            <option value="bedrooms">Bedrooms</option>
           </select>
         </label>
-        <label>
-          <input type="checkbox" id="sort-desc"> Descending
-        </label>
+        <label><input type="checkbox" id="sort-desc"> Descending</label>
       </div>
     </details>
 
-    <div id="listings"></div>
-    <div class="pagination" id="pagination"></div>
-
-    
+    <div id="result-count"></div>
+    <div id="listings" class="card-grid"></div>
+    <div id="pagination" class="pagination"></div>
   </main>
 
-  <script>
-    const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSeLM_9EEwGxK_WIG-KmNA00bSqI5UFYK6aGG8LiGRCG4_HlC6RqxDUbfB_bPPLTUwncvLraf8qViCS/pub?gid=1495678281&single=true&output=csv";
-    let listings = [];
-    let headers = [];
-    let currentPage = 1;
-    const pageSize = 20;
+  <!-- Photo overlay -->
+  <div id="photo-overlay">
+    <nav class="topbar">
+      <button id="overlay-close" class="secondary outline" style="padding:.3rem .8rem;margin:0">&larr; Back</button>
+      <span class="title" id="overlay-title"></span>
+      <span class="tag" id="overlay-tag"></span>
+    </nav>
+    <iframe id="overlay-frame" src="about:blank"></iframe>
+  </div>
 
-    function normalizeHeaders(inputHeaders) {
-      return inputHeaders.map(h => h.trim());
-    }
-
-    function applyFilter(formData) {
-      listings = window.allRows.filter(row => {
-        const map = {};
-        headers.forEach((h, i) => map[h] = row[i] ? row[i].trim() : '');
-
-        const price = parseInt(map["Price"].replace(/[^0-9]/g, "")) || 0;
-        const area = parseFloat(map["Area Sqm."]) || 0;
-        const bedrooms = parseInt(map["Bedroom"] || 0);
-        const bathrooms = parseInt(map["Bathroom"] || 0);
-
-        const minBedrooms = parseInt(formData["minBedrooms"] || 0);
-        const maxBedrooms = parseInt(formData["maxBedrooms"] || 9999);
-        const minBathrooms = parseInt(formData["minBathrooms"] || 0);
-        const maxBathrooms = parseInt(formData["maxBathrooms"] || 9999);
-
-        return (
-          (!formData["Property name"] || map["Property name"].toLowerCase().includes(formData["Property name"].toLowerCase())) &&
-          (!formData["Property type"] || map["Property type"].toLowerCase().includes(formData["Property type"].toLowerCase())) &&
-          (!formData["Location"] || map["Location"].toLowerCase().includes(formData["Location"].toLowerCase())) &&
-          (!formData["minPrice"] || price >= parseInt(formData["minPrice"])) &&
-          (!formData["maxPrice"] || price <= parseInt(formData["maxPrice"])) &&
-          bedrooms >= minBedrooms && bedrooms <= maxBedrooms &&
-          bathrooms >= minBathrooms && bathrooms <= maxBathrooms &&
-          (!formData["minArea"] || area >= parseFloat(formData["minArea"])) &&
-          (!formData["maxArea"] || area <= parseFloat(formData["maxArea"])) &&
-          (!formData["New Code"] || map["New Code"].toLowerCase().includes(formData["New Code"].toLowerCase()))
-        );
-      });
-      currentPage = 1;
-      renderListings();
-    }
-
-    function renderListings() {
-      const sortField = document.getElementById("sort-field").value;
-      const desc = document.getElementById("sort-desc").checked;
-      if (sortField) {
-        listings.sort((a, b) => {
-          const aVal = (a[headers.indexOf(sortField)] || '').toLowerCase();
-          const bVal = (b[headers.indexOf(sortField)] || '').toLowerCase();
-          const aNum = parseFloat(aVal.replace(/[^0-9.]/g, "")) || 0;
-          const bNum = parseFloat(bVal.replace(/[^0-9.]/g, "")) || 0;
-          const isNumeric = !isNaN(aNum) && !isNaN(bNum);
-          return isNumeric ? (desc ? bNum - aNum : aNum - bNum) : (desc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal));
-        });
-      }
-
-      const start = (currentPage - 1) * pageSize;
-      const end = start + pageSize;
-      const visible = listings.slice(start, end);
-
-      const container = document.getElementById("listings");
-      container.innerHTML = "";
-
-      visible.forEach((row) => {
-        const data = {};
-        headers.forEach((header, i) => {
-          data[header] = row[i] ? row[i].trim() : '';
-        });
-
-        const ownerName = data["owner name"] || data["Owner name"] || data["Owner Name"] || "";
-        const phoneNumber = data["Phone no."] || data["Phone No."] || data["phone no."] || data["Phone"] || "";
-        const phoneHref = phoneNumber ? phoneNumber.replace(/[^0-9+]/g, "") : "";
-
-        const div = document.createElement("div");
-        div.className = "listing";
-        div.innerHTML = `
-          <article class="listing-grid" style="position: relative;">
-            <header style="grid-column: span 1">
-              <strong>${data["Property name"] || "Unnamed Property"}</strong><br>
-              <small>${data["Location"] || ""}</small><br>
-              <small class="id-tag">${data["New Code"] || ""}</small>
-              <small><strong>Price:</strong> ${data["Price"] || "Contact us"}</small>
-            </header>
-            <div>
-              <strong>Type:</strong> ${data["Property type"] || ""}<br>
-              <strong>Unit/Floor:</strong> ${data["Unit No."] || ""} / ${data["Floor"] || ""}<br>
-              <strong>Area:</strong> ${data["Area Sqm."] || ""} m&sup2;
-            </div>
-            <div>
-              <strong>Bedrooms:</strong> ${data["Bedroom"] || ""}<br>
-              <strong>Bathrooms:</strong> ${data["Bathroom"] || ""}<br>
-              ${data["Pic"] ? `<a href="${data["Pic"]}" target="_blank">Photos</a><br>` : ""}
-              ${data["Remarks /ทิศ & วิว"] ? `<em>${data["Remarks /ทิศ & วิว"]}</em><br>` : ""}
-              ${data["Sale/rent conditions  eg. Transfer free etc."] ? `<small>${data["Sale/rent conditions  eg. Transfer free etc."]}</small>` : ""}
-            </div>
-            <div>
-              <strong>Owner:</strong> ${ownerName || "Not provided"}<br>
-              ${phoneNumber ? `<strong>Phone:</strong> <a href="tel:${phoneHref}">${phoneNumber}</a>` : `<span style="color: var(--pico-muted-color); font-size: 0.85em;">Phone pending</span>`}
-            </div>
-          </article>
-        `;
-        container.appendChild(div);
-      });
-
-      const totalPages = Math.ceil(listings.length / pageSize);
-      const pagination = document.getElementById("pagination");
-      pagination.innerHTML = "";
-
-      function createPageButton(label, page, isActive = false) {
-        const btn = document.createElement("button");
-        btn.textContent = label;
-        if (isActive) btn.setAttribute("aria-current", "page");
-        btn.addEventListener("click", () => {
-          currentPage = page;
-          renderListings();
-        });
-        return btn;
-      }
-
-      if (currentPage > 1) pagination.appendChild(createPageButton("First", 1));
-      if (currentPage > 1) pagination.appendChild(createPageButton("Prev", currentPage - 1));
-
-      const range = 2; // pages before and after current
-      let startPage = Math.max(1, currentPage - range);
-      let endPage = Math.min(totalPages, currentPage + range);
-
-      if (startPage > 1) {
-        pagination.appendChild(createPageButton("1", 1));
-        if (startPage > 2) pagination.appendChild(document.createTextNode("..."));
-      }
-
-      for (let i = startPage; i <= endPage; i++) {
-        pagination.appendChild(createPageButton(i, i, i === currentPage));
-      }
-
-      if (endPage < totalPages) {
-        if (endPage < totalPages - 1) pagination.appendChild(document.createTextNode("..."));
-        pagination.appendChild(createPageButton(totalPages, totalPages));
-      }
-
-      if (currentPage < totalPages) pagination.appendChild(createPageButton("Next", currentPage + 1));
-      if (currentPage < totalPages) pagination.appendChild(createPageButton("Last", totalPages));
-    }
-
-    
-    fetch(sheetUrl)
-      .then(res => res.blob())
-      .then(blob => blob.text())
-      .then(csv => {
-        const parsed = Papa.parse(csv.trim(), { skipEmptyLines: true });
-        headers = normalizeHeaders(parsed.data[0]);
-        window.allRows = parsed.data.slice(1);
-        listings = window.allRows;
-        renderListings();
-        document.getElementById("loading-screen").style.display = "none";
-      });
-
-            document.getElementById("filter-form").addEventListener("submit", e => {
-      e.preventDefault();
-      const formData = Object.fromEntries(new FormData(e.target).entries());
-      applyFilter(formData);
-    });
-
-    document.getElementById("sort-field").addEventListener("change", renderListings);
-    document.getElementById("sort-desc").addEventListener("change", renderListings);
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>

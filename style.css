@@ -1,0 +1,154 @@
+/* ── Loading screen ── */
+#loading-screen {
+  position: fixed; inset: 0;
+  background: var(--pico-background-color, #11191f);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+}
+#loading-screen img {
+  max-width: 500px; height: auto;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+@keyframes pulse {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50%     { transform: scale(1.04); opacity: .8; }
+}
+
+/* ── Card grid ── */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+@media (max-width: 1200px) { .card-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 800px)  { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px)  { .card-grid { grid-template-columns: 1fr; } }
+
+/* ── Card ── */
+.card {
+  background: var(--pico-card-background-color);
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color .2s;
+}
+.card:hover { border-color: var(--pico-primary); }
+
+/* ── Square image placeholder ── */
+.card-thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.card-thumb img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.card-thumb .spinner {
+  position: absolute;
+  width: 28px; height: 28px;
+  border: 3px solid rgba(255,255,255,.15);
+  border-top-color: rgba(255,255,255,.6);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.card-thumb .id-tag {
+  position: absolute; left: 6px; bottom: 6px;
+  font-size: .65em; background: rgba(0,0,0,.7);
+  color: #fff; padding: 2px 6px; border-radius: 4px;
+}
+
+/* ── Card body ── */
+.card-body {
+  padding: .75rem;
+  font-size: .85em;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+}
+.card-body .building {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-body .meta {
+  color: var(--pico-muted-color);
+  font-size: .8em;
+}
+.card-body .price {
+  margin-top: auto;
+  padding-top: .35rem;
+  font-weight: 600;
+}
+.card-body .price .rent  { color: var(--pico-primary); }
+.card-body .price .sale  { color: #e879a0; }
+
+/* ── Status badge ── */
+.badge {
+  display: inline-block;
+  font-size: .65em;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+.badge-available    { background: #16a34a; color: #fff; }
+.badge-upcoming     { background: #2563eb; color: #fff; }
+.badge-tocheck      { background: #d97706; color: #fff; }
+.badge-notavailable { background: #52525b; color: #aaa; }
+.badge-sale         { background: #9333ea; color: #fff; }
+.badge-other        { background: #374151; color: #ccc; }
+
+/* ── Pagination ── */
+.pagination {
+  display: flex; justify-content: center;
+  gap: .5rem; margin: 1.5rem 0; flex-wrap: wrap;
+}
+.pagination button { min-width: 2.4rem; padding: .3rem .6rem; font-size: .85em; }
+
+/* ── Filters ── */
+.filter-row { display: flex; gap: .75rem; flex-wrap: wrap; align-items: end; }
+.filter-row label { flex: 1; min-width: 140px; }
+.filter-row input, .filter-row select { margin-bottom: 0; }
+#result-count { margin: .75rem 0; font-size: .85em; color: var(--pico-muted-color); }
+
+/* ── Photo overlay ── */
+#photo-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  z-index: 10000;
+  flex-direction: column;
+  background: var(--pico-background-color, #11191f);
+}
+#photo-overlay.open { display: flex; }
+#photo-overlay .topbar {
+  display: flex; align-items: center; gap: 1rem;
+  padding: .5rem 1rem;
+  background: var(--pico-card-background-color);
+  border-bottom: 1px solid var(--pico-muted-border-color);
+  flex-shrink: 0;
+}
+#photo-overlay .topbar .title {
+  font-weight: 600; font-size: .95em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  flex: 1;
+}
+#photo-overlay .topbar .tag {
+  font-size: .8em; color: var(--pico-muted-color);
+}
+#photo-overlay iframe {
+  flex: 1; width: 100%; border: none; background: #000;
+}
