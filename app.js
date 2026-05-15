@@ -1,4 +1,7 @@
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR0D8NXWZ7ViUeHxH0XNdGycpf0fxaAEHAYqDGrMIbNYo4mrjT3WdoSjcPSeHO6TQ/pub?output=csv";
+const THUMBS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH5B8X8YSeOow9V0JjzKQwazvqV4D1mVS0hz6NjrCiJLMeGx4lrfsAETCppmp2VH9gszJfVo_bNgS_/pub?gid=1346427750&single=true&output=csv";
+const PHOTOS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH5B8X8YSeOow9V0JjzKQwazvqV4D1mVS0hz6NjrCiJLMeGx4lrfsAETCppmp2VH9gszJfVo_bNgS_/pub?gid=353008864&single=true&output=csv";
+const THUMB_MAP_URL = "thumb-map.json";
 const PAGE_SIZE = 16;
 
 let allProperties = [];
@@ -6,25 +9,30 @@ let filtered = [];
 let currentPage = 1;
 let thumbMap = {};
 
-/* ── Parse CSV and deduplicate to primary rows ── */
-function loadData() {
-  const thumbPromise = fetch("thumb-map.json")
-    .then(r => r.ok ? r.json() : {})
-    .catch(() => ({}));
-
-  const csvPromise = new Promise((resolve, reject) => {
-    Papa.parse(SHEET_URL, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: resolve,
-      error: reject
-    });
+/* ── Load CSV as promise ── */
+function loadCSV(url) {
+  return new Promise((resolve, reject) => {
+    Papa.parse(url, { download: true, header: true, skipEmptyLines: true, complete: resolve, error: reject });
   });
+}
 
-  Promise.all([thumbPromise, csvPromise])
-    .then(([thumbs, result]) => {
-      thumbMap = thumbs;
+/* ── Load all data sources ── */
+function loadData() {
+  const thumbJsonPromise = fetch(THUMB_MAP_URL).then(r => r.ok ? r.json() : {}).catch(() => ({}));
+  const thumbCsvPromise = loadCSV(THUMBS_URL).catch(() => ({ data: [] }));
+  const csvPromise = loadCSV(SHEET_URL);
+
+  Promise.all([thumbJsonPromise, thumbCsvPromise, csvPromise])
+    .then(([thumbJson, thumbCsv, result]) => {
+      // Start with thumb-map.json as base
+      thumbMap = thumbJson;
+      // Override with Drive thumbnails where available
+      thumbCsv.data.forEach(r => {
+        const id = (r.id || "").trim();
+        const url = (r.drive_url || r.thumbnail_url || "").trim();
+        if (id && url) thumbMap[id] = url;
+      });
+
       allProperties = result.data.filter(r => r.structure && r.structure.trim());
       filtered = allProperties.slice();
       renderPage();
@@ -37,7 +45,7 @@ function loadData() {
     });
 }
 
-/* ── Status → badge class ── */
+/* ── Status badge class ── */
 function badgeClass(status) {
   if (!status) return "badge-other";
   const s = status.toLowerCase();
@@ -49,14 +57,14 @@ function badgeClass(status) {
   return "badge-other";
 }
 
-/* ── Format price with Thai Baht ── */
+/* ── Format price ── */
 function fmtPrice(v) {
   const n = parseInt((v || "").replace(/[^0-9]/g, ""));
   if (!n) return null;
   return "\u0E3F" + n.toLocaleString();
 }
 
-/* ── Render current page of cards ── */
+/* ── Render cards ── */
 function renderPage() {
   const sortField = document.getElementById("sort-field").value;
   const desc = document.getElementById("sort-desc").checked;
@@ -88,12 +96,11 @@ function renderPage() {
     const floor = (p.floor || "").trim();
     const room = (p.room_number || "").trim();
     const status = (p.status || "").trim();
-    const photos = (p.photos || "").trim();
 
     return `
       <div class="card">
         <div class="card-thumb" style="cursor:pointer"
-             onclick="openPhotos('${photos.replace(/'/g,"\\'")}', '${(p.structure||'').trim().replace(/'/g,"\\'")}', '${id}')">
+             onclick="openGallery('${id}', '${(p.structure||'').trim().replace(/'/g,"\\'")}')">
           <div class="spinner"></div>
           <img src="${thumbMap[id] || ''}" loading="lazy"
                alt="${(p.structure||'').trim()}"
@@ -190,24 +197,78 @@ document.getElementById("clear-btn").addEventListener("click", () => {
 document.getElementById("sort-field").addEventListener("change", renderPage);
 document.getElementById("sort-desc").addEventListener("change", renderPage);
 
-/* ── Photo overlay ── */
-function openPhotos(url, name, id) {
-  if (!url) return;
+/* ── Photo gallery overlay ── */
+let galleryPhotos = [];
+let galleryIndex = 0;
+
+function openGallery(id, name) {
   document.getElementById("overlay-title").textContent = name || "Property Photos";
   document.getElementById("overlay-tag").textContent = id ? "#" + id : "";
-  document.getElementById("overlay-frame").src = url;
   document.getElementById("photo-overlay").classList.add("open");
   document.body.style.overflow = "hidden";
+
+  const container = document.getElementById("gallery-container");
+  container.innerHTML = '<div class="spinner" style="margin:auto"></div>';
+
+  // Fetch photos for this listing from the Photos sheet
+  loadCSV(PHOTOS_URL).then(result => {
+    galleryPhotos = result.data
+      .filter(r => (r.id || "").trim() === id)
+      .sort((a, b) => parseInt(a.photo_index || 0) - parseInt(b.photo_index || 0))
+      .map(r => (r.drive_url || "").trim())
+      .filter(Boolean);
+
+    if (galleryPhotos.length === 0) {
+      container.innerHTML = '<p style="text-align:center;color:#999;margin-top:3rem">No photos available</p>';
+      return;
+    }
+
+    galleryIndex = 0;
+    renderGallery();
+  }).catch(() => {
+    container.innerHTML = '<p style="text-align:center;color:#f66;margin-top:3rem">Failed to load photos</p>';
+  });
+}
+
+function renderGallery() {
+  const container = document.getElementById("gallery-container");
+  const url = galleryPhotos[galleryIndex];
+  const total = galleryPhotos.length;
+
+  container.innerHTML = `
+    <div class="gallery-viewer">
+      ${total > 1 ? '<button class="gallery-prev" onclick="galleryPrev()">\u2039</button>' : ''}
+      <img src="${url}" alt="Photo ${galleryIndex + 1}">
+      ${total > 1 ? '<button class="gallery-next" onclick="galleryNext()">\u203A</button>' : ''}
+    </div>
+    <div class="gallery-counter">${galleryIndex + 1} / ${total}</div>
+  `;
+}
+
+function galleryPrev() {
+  galleryIndex = (galleryIndex - 1 + galleryPhotos.length) % galleryPhotos.length;
+  renderGallery();
+}
+
+function galleryNext() {
+  galleryIndex = (galleryIndex + 1) % galleryPhotos.length;
+  renderGallery();
 }
 
 function closePhotos() {
   document.getElementById("photo-overlay").classList.remove("open");
-  document.getElementById("overlay-frame").src = "about:blank";
+  galleryPhotos = [];
+  galleryIndex = 0;
   document.body.style.overflow = "";
 }
 
 document.getElementById("overlay-close").addEventListener("click", closePhotos);
-document.addEventListener("keydown", e => { if (e.key === "Escape") closePhotos(); });
+document.addEventListener("keydown", e => {
+  if (!document.getElementById("photo-overlay").classList.contains("open")) return;
+  if (e.key === "Escape") closePhotos();
+  if (e.key === "ArrowLeft") galleryPrev();
+  if (e.key === "ArrowRight") galleryNext();
+});
 
 /* ── Boot ── */
 loadData();

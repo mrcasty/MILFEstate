@@ -149,6 +149,50 @@
 #photo-overlay .topbar .tag {
   font-size: .8em; color: var(--pico-muted-color);
 }
-#photo-overlay iframe {
-  flex: 1; width: 100%; border: none; background: #000;
+/* ── Gallery ── */
+#gallery-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+}
+.gallery-viewer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+.gallery-viewer img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.gallery-prev, .gallery-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,.6);
+  color: #fff;
+  border: none;
+  font-size: 2.5rem;
+  padding: .2rem .8rem;
+  cursor: pointer;
+  border-radius: 6px;
+  line-height: 1;
+  z-index: 1;
+}
+.gallery-prev:hover, .gallery-next:hover { background: rgba(255,255,255,.2); }
+.gallery-prev { left: 1rem; }
+.gallery-next { right: 1rem; }
+.gallery-counter {
+  padding: .5rem;
+  color: #aaa;
+  font-size: .85em;
+  text-align: center;
 }
