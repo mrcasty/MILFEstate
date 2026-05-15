@@ -95,7 +95,7 @@ function renderPage() {
     `${filtered.length} listings \u2014 page ${currentPage} of ${Math.ceil(filtered.length / PAGE_SIZE) || 1}`;
 
   const grid = document.getElementById("listings");
-  grid.innerHTML = page.map(p => {
+  grid.innerHTML = page.map((p, idx) => {
     const id = (p.id || "").trim();
     const rent = fmtPrice(p.rent);
     const sale = fmtPrice(p.sale);
@@ -106,10 +106,13 @@ function renderPage() {
     const room = (p.room_number || "").trim();
     const status = (p.status || "").trim();
 
+    // Store property ref for gallery
+    const pageIdx = (currentPage - 1) * PAGE_SIZE + idx;
+
     return `
       <div class="card">
         <div class="card-thumb" style="cursor:pointer"
-             onclick="openGallery('${id}', '${(p.structure||'').trim().replace(/'/g,"\\'")}')">
+             onclick="openGallery(${pageIdx})">
           <div class="spinner"></div>
           <img src="${driveThumb(thumbMap[id], 200) || ''}" loading="lazy"
                alt="${(p.structure||'').trim()}"
@@ -209,8 +212,16 @@ document.getElementById("sort-desc").addEventListener("change", renderPage);
 /* ── Photo gallery overlay ── */
 let galleryPhotos = [];
 let galleryIndex = 0;
+let galleryProperty = null;
 
-function openGallery(id, name) {
+function openGallery(filteredIdx) {
+  galleryProperty = filtered[filteredIdx];
+  if (!galleryProperty) return;
+
+  const p = galleryProperty;
+  const id = (p.id || "").trim();
+  const name = (p.structure || "").trim();
+
   document.getElementById("overlay-title").textContent = name || "Property Photos";
   document.getElementById("overlay-tag").textContent = id ? "#" + id : "";
   document.getElementById("photo-overlay").classList.add("open");
@@ -227,11 +238,6 @@ function openGallery(id, name) {
       .map(r => driveThumb((r.drive_url || "").trim(), 1000))
       .filter(Boolean);
 
-    if (galleryPhotos.length === 0) {
-      container.innerHTML = '<p style="text-align:center;color:#999;margin-top:3rem">No photos available</p>';
-      return;
-    }
-
     galleryIndex = 0;
     renderGallery();
   }).catch(() => {
@@ -241,16 +247,51 @@ function openGallery(id, name) {
 
 function renderGallery() {
   const container = document.getElementById("gallery-container");
-  const url = galleryPhotos[galleryIndex];
+  const p = galleryProperty;
+  const rent = fmtPrice(p.rent);
+  const sale = fmtPrice(p.sale);
+  const bed = (p.bedrooms || "").trim();
+  const bath = (p.bath || "").trim();
+  const sqm = (p.SQm || "").trim();
+  const floor = (p.floor || "").trim();
+  const room = (p.room_number || "").trim();
+  const status = (p.status || "").trim();
+  const owner = (p.owner_name || "").trim();
+  const phone = (p["phone Number"] || "").trim();
+  const phoneHref = phone.replace(/[^0-9+]/g, "");
+
+  const hasPhotos = galleryPhotos.length > 0;
+  const url = hasPhotos ? galleryPhotos[galleryIndex] : "";
   const total = galleryPhotos.length;
 
   container.innerHTML = `
-    <div class="gallery-viewer">
-      ${total > 1 ? '<button class="gallery-prev" onclick="galleryPrev()">\u2039</button>' : ''}
-      <img src="${url}" alt="Photo ${galleryIndex + 1}">
-      ${total > 1 ? '<button class="gallery-next" onclick="galleryNext()">\u203A</button>' : ''}
+    <div class="gallery-layout">
+      <div class="gallery-viewer">
+        ${hasPhotos && total > 1 ? '<button class="gallery-prev" onclick="galleryPrev()">\u2039</button>' : ''}
+        ${hasPhotos
+          ? '<img src="' + url + '" alt="Photo ' + (galleryIndex + 1) + '">'
+          : '<p style="color:#999;margin:auto">No photos available</p>'}
+        ${hasPhotos && total > 1 ? '<button class="gallery-next" onclick="galleryNext()">\u203A</button>' : ''}
+      </div>
+      <div class="gallery-details">
+        <h3>${(p.structure || "Unknown").trim()}</h3>
+        <span class="badge ${badgeClass(status)}">${status || "?"}</span>
+        ${hasPhotos ? '<div class="gallery-counter">' + (galleryIndex + 1) + ' / ' + total + '</div>' : ''}
+        <table>
+          ${room ? '<tr><td>Room</td><td>' + room + '</td></tr>' : ''}
+          ${floor ? '<tr><td>Floor</td><td>' + floor + '</td></tr>' : ''}
+          ${bed ? '<tr><td>Bedrooms</td><td>' + bed + '</td></tr>' : ''}
+          ${bath ? '<tr><td>Bathrooms</td><td>' + bath + '</td></tr>' : ''}
+          ${sqm ? '<tr><td>Area</td><td>' + sqm + ' m\u00B2</td></tr>' : ''}
+          ${rent ? '<tr><td>Rent</td><td class="rent">' + rent + '</td></tr>' : ''}
+          ${sale ? '<tr><td>Sale</td><td class="sale">' + sale + '</td></tr>' : ''}
+        </table>
+        <div class="gallery-contact">
+          ${owner ? '<div><strong>Owner:</strong> ' + owner + '</div>' : ''}
+          ${phone ? '<div><strong>Phone:</strong> <a href="tel:' + phoneHref + '">' + phone + '</a></div>' : ''}
+        </div>
+      </div>
     </div>
-    <div class="gallery-counter">${galleryIndex + 1} / ${total}</div>
   `;
 }
 
