@@ -9,6 +9,15 @@ let filtered = [];
 let currentPage = 1;
 let thumbMap = {};
 
+/* ── Convert Drive URL to embeddable thumbnail URL ── */
+function driveThumb(url, size) {
+  if (!url) return '';
+  if (!url.includes("drive.google.com")) return url; // reverse.estate URLs pass through
+  const m = url.match(/[?&]id=([^&]+)/);
+  if (m) return "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w" + (size || 200);
+  return url;
+}
+
 /* ── Load CSV as promise ── */
 function loadCSV(url) {
   return new Promise((resolve, reject) => {
@@ -102,7 +111,7 @@ function renderPage() {
         <div class="card-thumb" style="cursor:pointer"
              onclick="openGallery('${id}', '${(p.structure||'').trim().replace(/'/g,"\\'")}')">
           <div class="spinner"></div>
-          <img src="${thumbMap[id] || ''}" loading="lazy"
+          <img src="${driveThumb(thumbMap[id], 200) || ''}" loading="lazy"
                alt="${(p.structure||'').trim()}"
                onload="this.previousElementSibling.style.display='none'"
                onerror="this.previousElementSibling.style.display='none'; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23555%22 font-size=%2214%22>No photo</text></svg>'">
@@ -215,7 +224,7 @@ function openGallery(id, name) {
     galleryPhotos = result.data
       .filter(r => (r.id || "").trim() === id)
       .sort((a, b) => parseInt(a.photo_index || 0) - parseInt(b.photo_index || 0))
-      .map(r => (r.drive_url || "").trim())
+      .map(r => driveThumb((r.drive_url || "").trim(), 1000))
       .filter(Boolean);
 
     if (galleryPhotos.length === 0) {
