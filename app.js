@@ -1,5 +1,5 @@
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR0D8NXWZ7ViUeHxH0XNdGycpf0fxaAEHAYqDGrMIbNYo4mrjT3WdoSjcPSeHO6TQ/pub?output=csv";
-const THUMBS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH5B8X8YSeOow9V0JjzKQwazvqV4D1mVS0hz6NjrCiJLMeGx4lrfsAETCppmp2VH9gszJfVo_bNgS_/pub?gid=1346427750&single=true&output=csv";
+const THUMBS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH5B8X8YSeOow9V0JjzKQwazvqV4D1mVS0hz6NjrCiJLMeGx4lrfsAETCppmp2VH9gszJfVo_bNgS_/pub?gid=1448330933&single=true&output=csv";
 const PHOTOS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH5B8X8YSeOow9V0JjzKQwazvqV4D1mVS0hz6NjrCiJLMeGx4lrfsAETCppmp2VH9gszJfVo_bNgS_/pub?gid=353008864&single=true&output=csv";
 const THUMB_MAP_URL = "thumb-map.json";
 const PAGE_SIZE = 16;
