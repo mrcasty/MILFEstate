@@ -3,6 +3,7 @@ const THUMBS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH5B8X8YSeO
 const PHOTOS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH5B8X8YSeOow9V0JjzKQwazvqV4D1mVS0hz6NjrCiJLMeGx4lrfsAETCppmp2VH9gszJfVo_bNgS_/pub?gid=353008864&single=true&output=csv";
 const THUMB_MAP_URL = "thumb-map.json";
 const PAGE_SIZE = 16;
+const ADMIN = new URLSearchParams(window.location.search).get("key") === "judy123";
 
 let allProperties = [];
 let filtered = [];
@@ -286,10 +287,10 @@ function renderGallery() {
           ${rent ? '<tr><td>Rent</td><td class="rent">' + rent + '</td></tr>' : ''}
           ${sale ? '<tr><td>Sale</td><td class="sale">' + sale + '</td></tr>' : ''}
         </table>
-        <div class="gallery-contact">
-          ${owner ? '<div><strong>Owner:</strong> ' + owner + '</div>' : ''}
-          ${phone ? '<div><strong>Phone:</strong> <a href="tel:' + phoneHref + '">' + phone + '</a></div>' : ''}
-        </div>
+        ${ADMIN ? '<div class="gallery-contact">' +
+          (owner ? '<div><strong>Owner:</strong> ' + owner + '</div>' : '') +
+          (phone ? '<div><strong>Phone:</strong> <a href="tel:' + phoneHref + '">' + phone + '</a></div>' : '') +
+        '</div>' : ''}
       </div>
     </div>
   `;
