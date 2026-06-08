@@ -147,7 +147,9 @@
   flex: 1;
 }
 #photo-overlay .topbar .tag {
-  font-size: .8em; color: var(--pico-muted-color);
+  font-size: .85em; color: var(--pico-muted-color);
+  padding: .4rem .8rem;
+  -webkit-tap-highlight-color: transparent;
 }
 /* ── Gallery ── */
 #gallery-container {
