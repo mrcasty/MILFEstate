@@ -150,6 +150,10 @@
   font-size: .85em; color: var(--pico-muted-color);
   padding: .4rem .8rem;
   -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  cursor: pointer;
 }
 /* ── Gallery ── */
 #gallery-container {
