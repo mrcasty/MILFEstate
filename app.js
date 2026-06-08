@@ -210,6 +210,17 @@ document.getElementById("clear-btn").addEventListener("click", () => {
 document.getElementById("sort-field").addEventListener("change", renderPage);
 document.getElementById("sort-desc").addEventListener("change", renderPage);
 
+/* ── Photos data cache ── */
+let photosCache = null;
+
+function getPhotosData() {
+  if (photosCache) return Promise.resolve(photosCache);
+  return loadCSV(PHOTOS_URL).then(result => {
+    photosCache = result.data;
+    return photosCache;
+  });
+}
+
 /* ── Photo gallery overlay ── */
 let galleryPhotos = [];
 let galleryIndex = 0;
@@ -240,11 +251,11 @@ function openGallery(filteredIdx) {
   container.innerHTML = '<div class="spinner" style="margin:auto"></div>';
 
   // Fetch photos for this listing from the Photos sheet
-  loadCSV(PHOTOS_URL).then(result => {
-    galleryPhotos = result.data
+  getPhotosData().then(data => {
+    galleryPhotos = data
       .filter(r => (r.id || "").trim() === id)
       .sort((a, b) => parseInt(a.photo_index || 0) - parseInt(b.photo_index || 0))
-      .map(r => driveThumb((r.drive_url || "").trim(), 1000))
+      .map(r => driveThumb((r.drive_url || "").trim(), 600))
       .filter(Boolean);
 
     galleryIndex = 0;
