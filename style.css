@@ -229,7 +229,8 @@
   margin: .5rem 0;
 }
 @media (max-width: 700px) {
-  .gallery-layout { flex-direction: column; overflow-y: auto; }
+  #gallery-container { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .gallery-layout { flex-direction: column; flex: none; }
   .gallery-details { width: 100%; border-left: none; border-top: 1px solid var(--pico-muted-border-color); overflow-y: visible; }
   .gallery-layout .gallery-viewer { flex: none; height: 50vh; }
 }
