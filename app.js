@@ -239,13 +239,10 @@ function openGallery(filteredIdx) {
   tagEl.textContent = id ? "#" + id : "";
   if (ADMIN) {
     tagEl.style.cursor = "pointer";
-    function toggleOwner(e) {
-      e.preventDefault();
+    tagEl.onclick = function() {
       var info = document.getElementById("owner-info");
       if (info) info.style.display = info.style.display === "none" ? "" : "none";
-    }
-    tagEl.onclick = toggleOwner;
-    tagEl.ontouchend = toggleOwner;
+    };
   }
   document.getElementById("photo-overlay").classList.add("open");
   document.body.style.overflow = "hidden";
